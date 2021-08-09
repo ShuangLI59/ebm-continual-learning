@@ -4,7 +4,7 @@ This project aims at classification continual learning problems using Energy-Bas
 
 - [Project Page](https://energy-based-model.github.io/Energy-Based-Models-for-Continual-Learning/)
 
-- [Code] This code is the basic version of our paper. We will release the full version soon.
+- [Code] This code is the basic version of our paper. We will release the final version soon.
 
 ------------------------------------------------------------------------------------------------------------------------
 ## Requirements
