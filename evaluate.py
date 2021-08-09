@@ -8,6 +8,7 @@ from torch.nn import functional as F
 import random
 import os
 import pickle
+import time
 ####--------------------------------------------------------------------------------------------------------------####
 
 ####-----------------------------####
@@ -43,7 +44,7 @@ def validate(args, model, dataset, batch_size=128, test_size=1024, verbose=True,
         seen_classes_list += labels_per_task[i]
     seen_classes = np.array(seen_classes_list)
 
-
+    tic = time.time()
     for data, labels in data_loader:
         # -break on [test_size] (if "None", full dataset is used)
         if test_size:
@@ -72,7 +73,8 @@ def validate(args, model, dataset, batch_size=128, test_size=1024, verbose=True,
         total_correct += predicted
         total_tested += len(data)
 
-
+    toc = time.time()
+    print('time: ', toc - tic)
     precision = total_correct / total_tested
 
     # Set model back to its initial mode, print result on screen (if requested) and return it
@@ -103,7 +105,7 @@ def validate_ebm(args, model, dataset, batch_size=128, test_size=1024, verbose=T
         seen_classes_list += labels_per_task[i]
     seen_classes = np.array(seen_classes_list)
 
-    
+    tic = time.time()
     for data, labels in data_loader:
         # -break on [test_size] (if "None", full dataset is used)
         if test_size:
@@ -153,7 +155,8 @@ def validate_ebm(args, model, dataset, batch_size=128, test_size=1024, verbose=T
         total_correct += predicted
         total_tested += len(data)
 
-
+    toc = time.time()
+    print('ebm time: ', toc - tic)
     precision = total_correct / total_tested
 
 
