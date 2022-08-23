@@ -75,7 +75,7 @@ class Classifier(ContinualLearner):
     def name(self):
         return 'Classifier'
 
-    def train_a_batch(self, args, x, y, x_, y_, task=1):
+    def train_a_batch(self, args, x, y, x_, y_, task=1, device="gpu"):
         self.train()
         self.optimizer.zero_grad()
         batch_size = x.shape[0]
@@ -112,7 +112,7 @@ class Classifier(ContinualLearner):
 
 
                 ## compute loss
-                y_tem = torch.tensor([seen_classes_list.index(tem) for tem in y]).long().cuda()
+                y_tem = torch.tensor([seen_classes_list.index(tem) for tem in y]).long().to(device)
                 
                 if y_ is not None:
                     predL = F.cross_entropy(input=y_hat, target=y_tem, reduction='none')

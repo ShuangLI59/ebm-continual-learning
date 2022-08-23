@@ -121,7 +121,7 @@ class EBM_net_cifar100(nn.Module):
     def __init__(self, num_classes=10, input_size=1000, output_size=10, layers=2, hid_size=1000, hid_smooth=None,
                  size_per_layer=None,
                  drop=0, batch_norm=True, nl="relu", bias=True, excitability=False, excit_buffer=False, output='normal',
-                 fixed_mask=True, mask_prob=0.8, only_first=False, with_skip=False):
+                 fixed_mask=True, mask_prob=0.8, only_first=False, with_skip=False, device="gpu"):
         '''sizes: 0th=[input], 1st=[hid_size], ..., 1st-to-last=[hid_smooth], last=[output].
         [num_classes]      # of classes
         [input_size]       # of inputs
@@ -200,7 +200,7 @@ class EBM_net_cifar100(nn.Module):
                     in_size, out_size, bias=bias, excitability=excitability, excit_buffer=excit_buffer, drop=drop,
                     batch_norm=False if (lay_id == self.layers and not output == "normal") else batch_norm,
                     nl=nn.Sigmoid() if (lay_id == self.layers and not output == "normal") else nl,
-                    gate_size=num_classes, gating_prop=mask_prob,
+                    gate_size=num_classes, gating_prop=mask_prob, device=device
                 )
             else:
                 layer = fc_layer(

@@ -19,6 +19,7 @@ class EBM(ContinualLearner):
         self.num_classes = classes
         self.class_entries = list(range(self.num_classes))
         self.labels_per_task = args.labels_per_task
+        self.device=args.device
         
         # flatten image to 2D-tensor
         self.flatten = utils.Flatten()
@@ -56,7 +57,7 @@ class EBM(ContinualLearner):
             #------------------------------------------------------------------------------------------#
             self.fcE = EBM_net_cifar100(num_classes=100, size_per_layer=self.fc_layer_sizes, drop=0, batch_norm=False,
                            nl='relu', bias=True, excitability=False, excit_buffer=True,
-                           fixed_mask=True, mask_prob=0.85, only_first=False, with_skip=False)
+                           fixed_mask=True, mask_prob=0.85, only_first=False, with_skip=False,device=self.device)
             self.classifier = nn.Linear(self.units_before_classifier, 1, bias=True)
 
                 
@@ -176,7 +177,7 @@ class EBM(ContinualLearner):
 
         
 
-    def train_a_batch(self, args, x, y, x_, y_, task=1):
+    def train_a_batch(self, args, x, y, x_, y_, task=1, device="gpu"):
         self.train()
         self.optimizer.zero_grad()
 
@@ -206,26 +207,26 @@ class EBM(ContinualLearner):
             
             single_neg = True
             if self.args.experiment=='splitMNISToneclass':
-                joint_targets = torch.cat([y[:,None], (torch.ones([batch_size,1])*99).cuda()], dim=-1)
-                joint_targets = joint_targets.cuda().long()
+                joint_targets = torch.cat([y[:,None], (torch.ones([batch_size,1])*99).to(device)], dim=-1)
+                joint_targets = joint_targets.to(device).long()
             else:
                 if single_neg:
-                    joint_targets = torch.LongTensor(batch_size, 2).cuda()
+                    joint_targets = torch.LongTensor(batch_size, 2).to(device)
                     for i in range(batch_size):
                         while True:
                             neg_sample = random.choice(cur_classes)
                             if not neg_sample == y[i]:
                                 break
-                        joint_targets[i] = torch.tensor([y[i], neg_sample]).cuda()
+                        joint_targets[i] = torch.tensor([y[i], neg_sample]).to(device)
                 else:
                     joint_targets = torch.tensor(np.array(cur_classes)).view(1, -1).expand(batch_size, len(cur_classes))
-                    joint_targets = joint_targets.cuda().long()
+                    joint_targets = joint_targets.to(device).long()
 
 
 
     
             if self.args.task_info_input:
-                task_id = (torch.ones([batch_size])*(task-1)).long().cuda()
+                task_id = (torch.ones([batch_size])*(task-1)).long().to(device)
                 energy = self(x, joint_targets, task_id) # [128, 4]
             else:
                 energy = self(x, joint_targets) # [128, 4]
@@ -237,7 +238,7 @@ class EBM(ContinualLearner):
             if single_neg:
                 energy_pos = energy[:, 0].view(batch_size, -1)
             else:
-                y_tem = torch.tensor([cur_classes.index(tem) for tem in y]).long().cuda()
+                y_tem = torch.tensor([cur_classes.index(tem) for tem in y]).long().to(device)
                 y_tem = y_tem.view(batch_size, 1)
                 energy_pos = energy.gather(dim=1, index=y_tem)
                     
@@ -254,7 +255,7 @@ class EBM(ContinualLearner):
             ## compuate accuracy
             if single_neg:
                 _, precision = torch.min(energy, 1)
-                precision = 1.* (precision == torch.zeros(batch_size).long().cuda()).sum() / x.size(0)
+                precision = 1.* (precision == torch.zeros(batch_size).long().to(device)).sum() / x.size(0)
             else:
                 _, precision = torch.min(energy, 1)
                 precision = 1.* (precision == y_tem.view(-1)).sum() / x.size(0)
