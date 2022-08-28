@@ -183,7 +183,7 @@ def weight_reset(m):
     if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear) or isinstance(m, em.LinearExcitability):
         m.reset_parameters()
 
-def load_checkpoint(model, model_dir, verbose=True, name=None, add_si_buffers=False):
+def load_checkpoint(model, model_dir, verbose=True, name=None, add_si_buffers=False,device="gpu"):
     '''Load saved state (in form of dictionary) at [model_dir] (if name is None, use "model.name") to [model].'''
     # -path from where to load checkpoint
     name = model.name if name is None else name
@@ -199,7 +199,7 @@ def load_checkpoint(model, model_dir, verbose=True, name=None, add_si_buffers=Fa
                 model.register_buffer('{}_SI_omega'.format(n), omega)
 
     # load parameters (i.e., [model] will now have the state of the loaded model)
-    checkpoint = torch.load(path)
+    checkpoint = torch.load(path, map_location=torch.device(device=device))
     model.load_state_dict(checkpoint['state'])
     # notify that we succesfully loaded the checkpoint
     if verbose:
@@ -210,7 +210,7 @@ def load_checkpoint(model, model_dir, verbose=True, name=None, add_si_buffers=Fa
 def init_params(model, args):
     # - reinitialize all parameters according to default initialization
     model.apply(weight_reset)
-    load_checkpoint(model.convE, model_dir='pretrained_model', name='C3-5x16-bn-s100N')
+    load_checkpoint(model.convE, model_dir='pretrained_model', name='C3-5x16-bn-s100N', device=args.device)
     return model
 
 ##-------------------------------------------------------------------------------------------------------------------##

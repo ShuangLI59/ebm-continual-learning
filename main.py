@@ -120,6 +120,7 @@ def run(args):
     # set cuda
     cuda = torch.cuda.is_available() and args.cuda
     device = torch.device("cuda" if cuda else "cpu")
+    args.device=device
 
     # set random seeds
     random.seed(args.seed)
