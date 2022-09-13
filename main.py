@@ -275,11 +275,11 @@ def run(args):
     if args.ebm:
         precs = [evaluate.validate_ebm(
             args, model, test_datasets[i], verbose=False, test_size=None, task=i+1, with_exemplars=False,
-            current_task = args.tasks) for i in range(args.tasks)]
+            current_task = args.tasks, device=device) for i in range(args.tasks)]
     else:
         precs = [evaluate.validate(
             args, model, test_datasets[i], verbose=False, test_size=None, task=i+1, with_exemplars=False,
-            current_task = args.tasks) for i in range(args.tasks)]
+            current_task = args.tasks, device=device) for i in range(args.tasks)]
 
     print("\n Precision on test-set (softmax classification):")
     for i in range(args.tasks):

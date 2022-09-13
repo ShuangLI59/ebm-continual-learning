@@ -155,7 +155,7 @@ def train_cl(args, model, train_datasets, scenario="class",labels_per_task=None,
                         loss_cb(progress, batch_index, loss_dict, task=task)
                 for eval_cb in eval_cbs:
                     if eval_cb is not None:
-                        eval_cb(args, model, batch_index, task=task)
+                        eval_cb(args, model, batch_index, task=task, device=device)
 
         progress.close()
         
