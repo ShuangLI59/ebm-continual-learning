@@ -138,7 +138,7 @@ def train_cl(args, model, train_datasets, scenario="class",labels_per_task=None,
 
 
             if batch_index <= iters:
-                loss_dict = model.train_a_batch(args, x, y, x_, y_, task=task, device=device)
+                loss_dict = model.train_a_batch(args, x, y, x_, y_, task=task, device=device,loss="nll")
 
 
                 # Update running parameter importance estimates in W

@@ -9,6 +9,8 @@ import numpy as np
 import random
 import gc
 from continual_learner import ContinualLearner
+from network.energy_loss import nll, mee, square_exponential, square_square, log_loss, hinge_loss
+
 
 class EBM(ContinualLearner):
     def __init__(self, args, image_size, image_channels, classes, fc_units=1000):
@@ -177,7 +179,7 @@ class EBM(ContinualLearner):
 
         
 
-    def train_a_batch(self, args, x, y, x_, y_, task=1, device="gpu"):
+    def train_a_batch(self, args, x, y, x_, y_, task=1, device="gpu", loss="nll"):
         self.train()
         self.optimizer.zero_grad()
 
@@ -232,22 +234,30 @@ class EBM(ContinualLearner):
                 energy = self(x, joint_targets) # [128, 4]
 
 
-            
-            
             ## compute loss
             if single_neg:
                 energy_pos = energy[:, 0].view(batch_size, -1)
+                energy_neg = energy[:, 1].view(batch_size, -1)
             else:
                 y_tem = torch.tensor([cur_classes.index(tem) for tem in y]).long().to(device)
                 y_tem = y_tem.view(batch_size, 1)
                 energy_pos = energy.gather(dim=1, index=y_tem)
-                    
 
-            partition_estimate = -1 * energy
-            partition_estimate = torch.logsumexp(partition_estimate, dim=1, keepdim=True)
-            
-            predL = energy_pos + partition_estimate
-            predL = predL.mean()
+
+            if loss == "nll":
+                predL = nll(energy, batch_size)
+            elif loss == "mee":
+                predL = mee(energy, batch_size)
+            elif loss == "square_exponential":
+                predL = square_exponential(energy, batch_size)
+            elif loss == "square_square":
+                predL = square_square(energy, batch_size)
+            elif loss == "log_loss":
+                predL = log_loss(energy, batch_size)
+            elif loss == "hinge_loss":
+                predL = hinge_loss(energy, batch_size)
+            else:
+                raise Exception("loss fx out of choice.")
 
             L2_loss = energy_pos.pow(2).mean()
             loss_cur = predL
