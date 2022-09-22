@@ -17,7 +17,7 @@ import time
 
 
 def validate(args, model, dataset, batch_size=128, test_size=1024, verbose=True,
-             with_exemplars=False, no_task_mask=False, task=None, current_task=None):
+             with_exemplars=False, no_task_mask=False, task=None, current_task=None, device="cuda"):
     '''Evaluate precision (= accuracy or proportion correct) of a classifier ([model]) on [dataset].
 
     [allowed_classes]   None or <list> containing all "active classes" between which should be chosen
@@ -65,7 +65,7 @@ def validate(args, model, dataset, batch_size=128, test_size=1024, verbose=True,
             y_hat = y_hat[:, seen_classes]
 
             ## accuracy
-            label_tem = torch.tensor([seen_classes_list.index(tem) for tem in labels]).long().cuda()
+            label_tem = torch.tensor([seen_classes_list.index(tem) for tem in labels]).long().to(device)
             _, precision = torch.max(y_hat, 1)
 
             predicted = (precision == label_tem).sum().item()
@@ -89,7 +89,7 @@ def validate(args, model, dataset, batch_size=128, test_size=1024, verbose=True,
 
 
 def validate_ebm(args, model, dataset, batch_size=128, test_size=1024, verbose=True,
-             with_exemplars=False, no_task_mask=False, task=None, current_task=None):
+             with_exemplars=False, no_task_mask=False, task=None, current_task=None, device="cuda"):
 
     # Set model to eval()-mode
     mode = model.training
@@ -118,26 +118,26 @@ def validate_ebm(args, model, dataset, batch_size=128, test_size=1024, verbose=T
         for tem in labels: assert tem in list(seen_classes_list) ## y shoud be in current classes
         
         if args.experiment=='cifar100':
-            ys_to_test = torch.LongTensor(batch_size, len(seen_classes_list)).cuda()
+            ys_to_test = torch.LongTensor(batch_size, len(seen_classes_list)).to(device)
             for i in range(batch_size):
-                ys_to_test[i] = torch.tensor(seen_classes_list).cuda()
+                ys_to_test[i] = torch.tensor(seen_classes_list).to(device)
             energy = model(data, ys_to_test)
 
             # accuracy
             _, predicted = torch.max(energy, 1) ## cifar100 model predict negative energy
-            label_tem = torch.tensor([seen_classes_list.index(tem) for tem in labels]).long().cuda()
+            label_tem = torch.tensor([seen_classes_list.index(tem) for tem in labels]).long().to(device)
             predicted = (predicted == label_tem).sum().item()
             
         else:
             ## get negatives+positive labels
             joint_targets = torch.tensor(seen_classes).view(1, -1).expand(batch_size, len(seen_classes))
-            joint_targets = joint_targets.cuda().long()
+            joint_targets = joint_targets.long().to(device)
 
             with torch.no_grad():
                 # Run model
                 # print(task, current_task)
                 if args.task_info_input:
-                    task_id = (torch.ones([batch_size])*(task-1)).long().cuda()
+                    task_id = (torch.ones([batch_size])*(task-1)).long().to(device)
                     energy = model(data, joint_targets, task_id)
                 else:
                     energy = model(data, joint_targets)
@@ -145,7 +145,7 @@ def validate_ebm(args, model, dataset, batch_size=128, test_size=1024, verbose=T
             
                 # accuracy
                 _, predicted = torch.min(energy, 1)
-                label_tem = torch.tensor([seen_classes_list.index(tem) for tem in labels]).long().cuda()
+                label_tem = torch.tensor([seen_classes_list.index(tem) for tem in labels]).long().to(device)
 
                 predicted = (predicted == label_tem).sum().item()
 
@@ -172,7 +172,7 @@ def validate_ebm(args, model, dataset, batch_size=128, test_size=1024, verbose=T
 
 def precision(args, model, datasets, current_task, iteration, labels_per_task=None, scenario="class",
               precision_dict=None, test_size=None, visdom=None, verbose=False, summary_graph=True,
-              with_exemplars=False, no_task_mask=False):
+              with_exemplars=False, no_task_mask=False, device="cuda"):
     '''Evaluate precision of a classifier (=[model]) on all tasks so far (= up to [current_task]) using [datasets].
 
     [precision_dict]    None or <dict> of all measures to keep track of, to which results will be appended to
@@ -188,11 +188,11 @@ def precision(args, model, datasets, current_task, iteration, labels_per_task=No
             if args.ebm:
                 precs.append(validate_ebm(args, model, datasets[i], test_size=test_size, verbose=verbose,
                                       with_exemplars=with_exemplars,
-                                      no_task_mask=no_task_mask, task=i+1, current_task=current_task))
+                                      no_task_mask=no_task_mask, task=i+1, current_task=current_task, device=device))
             else:
                 precs.append(validate(args, model, datasets[i], test_size=test_size, verbose=verbose,
                                       with_exemplars=with_exemplars,
-                                      no_task_mask=no_task_mask, task=i+1, current_task=current_task))
+                                      no_task_mask=no_task_mask, task=i+1, current_task=current_task, device=device))
         else:
             precs.append(0)
     

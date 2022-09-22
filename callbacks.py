@@ -9,7 +9,7 @@ def _eval_cb(log, test_datasets, visdom=None, precision_dict=None, iters_per_tas
     [test_datasets]     <list> of <Datasets>; also if only 1 task, it should be presented as a list!
     [scenario]          <str> how to decide which classes to include during evaluating precision'''
 
-    def eval_cb(args, classifier, batch, task=1):
+    def eval_cb(args, classifier, batch, task=1, device="cuda"):
         '''Callback-function, to evaluate performance of classifier.'''
 
         iteration = batch if task==1 else (task-1)*iters_per_task + batch
@@ -19,7 +19,7 @@ def _eval_cb(log, test_datasets, visdom=None, precision_dict=None, iters_per_tas
             evaluate.precision(args, classifier, test_datasets, task, iteration,
                                labels_per_task=labels_per_task, scenario=scenario, precision_dict=precision_dict,
                                test_size=test_size, visdom=visdom, summary_graph=summary_graph,
-                               with_exemplars=with_exemplars)
+                               with_exemplars=with_exemplars, device=device)
 
     return eval_cb if ((visdom is not None) or (precision_dict is not None)) else None
 
